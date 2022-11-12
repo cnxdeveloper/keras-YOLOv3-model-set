@@ -16,6 +16,7 @@ from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.layers import Input, Lambda
 from tensorflow_model_optimization.sparsity import keras as sparsity
 from PIL import Image
+import os
 
 from yolo5.model import get_yolo5_model, get_yolo5_inference_model
 from yolo5.postprocess_np import yolo5_postprocess_np
@@ -142,7 +143,9 @@ class YOLO_np(object):
         elif self.model_type.startswith('yolo3_') or self.model_type.startswith('yolo4_') or \
              self.model_type.startswith('tiny_yolo3_') or self.model_type.startswith('tiny_yolo4_'):
             # YOLOv3 & v4 entrance
-            out_boxes, out_classes, out_scores = yolo3_postprocess_np(self.yolo_model.predict(image_data), image_shape, self.anchors, len(self.class_names), self.model_input_shape, max_boxes=100, confidence=self.score, iou_threshold=self.iou, elim_grid_sense=self.elim_grid_sense)
+            pred = self.yolo_model.predict(image_data)
+            print(pred[0].shape)
+            out_boxes, out_classes, out_scores = yolo3_postprocess_np(pred, image_shape, self.anchors, len(self.class_names), self.model_input_shape, max_boxes=100, confidence=self.score, iou_threshold=self.iou, elim_grid_sense=self.elim_grid_sense)
         elif self.model_type.startswith('yolo2_') or self.model_type.startswith('tiny_yolo2_'):
             # YOLOv2 entrance
             out_boxes, out_classes, out_scores = yolo2_postprocess_np(self.yolo_model.predict(image_data), image_shape, self.anchors, len(self.class_names), self.model_input_shape, max_boxes=100, confidence=self.score, iou_threshold=self.iou, elim_grid_sense=self.elim_grid_sense)
@@ -318,8 +321,11 @@ def detect_img(yolo):
             print('Open Error! Try again!')
             continue
         else:
+            base_name = os.path.basename(img)
             r_image, _, _, _ = yolo.detect_image(image)
             r_image.show()
+            path_save = os.path.join("output", base_name+'_raw.jpg')
+            r_image.save(path_save)
 
 
 def main():
